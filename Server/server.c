@@ -1,28 +1,185 @@
 #include "header_files.h"
+ #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #define MAX_LINE 1024
-     
+#define MAX_CLIENTS 100
+int clients[MAX_CLIENTS];     
+int totalCost[MAX_CLIENTS];
+
+void details(char upc , int *price , char* desc){
+    *desc = "Not Found";
+    *price = -1;
+    FILE* database;
+
+    database = fopen("file.txt" , "r");
+    if(database == NULL){
+        *price = -1;
+        *desc = "Error: Cannot access database";
+        return ;
+    }
+    char dupc[100];
+    char ddesc[100];
+    int dd;
+    while(fscanf(database , "%s %d %s" , dupc , &dd , ddesc) != EOF){
+        if(strncmp(dupc , upc , 3) == 0){
+            *desc = (char *) malloc(sizeof(ddesc));
+            strcpy(*desc , ddesc);
+            *price = dd;
+            break;
+        }
+    }
+    fclose(database);
+}
+
 void driver( int connectionSocket )
 {
-	char buffer[MAX_LINE];
-	int n;
-	while(1){
-		bzero(buffer , MAX_LINE);
-		read ( connectionSocket , buffer , sizeof(buffer) ) ;
-		printf("%s\n", buffer);
-		bzero(buffer , MAX_LINE);
-		n=0;
-		while( (buffer[n++] = getchar() ) != '\n' );
-			write( connectionSocket , buffer , sizeof(buffer) );
-		if( strncmp( "exit" , buffer , 4 ) ==0 )
+	int pos=-1;
+	int flag=0;
+	for(int i1=0;i1<MAX_CLIENTS ; i1++)
+	{
+		if( clients[i1] == -1)
 		{
-			printf("Server Exit\n");
+			pos = i1;
+		}
+		if( clients[i1] == connectionSocket  )
+		{
+			flag=1;
 			break;
 		}
+	}
+
+	if( flag==0)
+	{
+		if(pos==-1)
+		{
+			printf("Number of clients exceeded\n");
+			return;
+		}
+		clients[pos] = connectionSocket;
+	}
+
+	printf("Child process created succesfully and now waiting for querries from the client\n");
+	char buffer[MAX_LINE];
+	int n;
+
+	int index;
+	for(int i1=0;i1<MAX_CLIENTS;i1++)
+	{
+		if( clients[i1] == connectionSocket )
+		{
+			index = i1;
+			break;
+		}
+	}
+
+	while(1){
+
+		bzero(buffer , MAX_LINE);
+		read ( connectionSocket , buffer , sizeof(buffer) ) ;
+		printf("Request received at server side: %s\n", buffer);
+		
+		char requestType='9';
+		char *upc=NULL,*number=NULL;
+		int i=2,k1=0,k2=0;
+
+		requestType = buffer[0];
+
+		while(buffer[i]!='\0' && buffer[i]!=' ')
+		{
+			upc[k1++] = buffer[i++];
+		}
+		i++;
+		while(buffer[i]!='\0' && buffer[i]!=' ')
+		{
+			number[k2++] = buffer[i++];
+		}
+		
+		int num = (int) atoi(number);
+		bzero(buffer , MAX_LINE);
+
+		if( requestType == 0 )
+		{
+			if( upc == NULL || strlen(upc) != 3 )
+			{
+				printf("Incorrect UPC Number\n");
+			}
+			else
+			{
+				int cost;
+				char *desc;
+				details(upc , &cost , &desc);
+				    // details("001" , &price , &desc);
+
+				if( cost == -1)
+				{
+					int bufferLength=0;
+					char *t = "1 UPC is not found in database";
+					for(int i1=0;t[i1]!='\0';i1++)
+						buffer[bufferLength++]=t[i1];
+					buffer[ bufferLength ]='\0';
+				}
+
+				else
+				{
+					totalCost[index] += (int)( cost * num );
+					buffer[0] = '0';
+					buffer[1] = ' ';
+					int bufferLength=2;
+
+					char *temp;
+					temp = itoa( cost , temp,10 );
+					int ctr=0;
+					while( temp!=NULL && temp[ctr]!='\0' )
+					{
+						buffer [ bufferLength++ ] = temp[ctr++];
+					}
+					buffer[bufferLength++] = ' ';
+					ctr=0;
+					while( details!= NULL && desc[ctr]!='\0' )
+					{
+						buffer [ bufferLength++ ] = desc[ctr++];
+					}
+					buffer[bufferLength]='\0';
+				}
+				write( connectionSocket , buffer , sizeof(buffer) );
+			}
+		}
+
+		else if( requestType == 1 )
+		{
+			buffer[0]='0';
+			buffer[1]=' ' ;
+			char *temp;
+			int bufferLength=2;
+
+			temp = itoa(totalCost[index] , temp, 10 );
+			for(int i1=0;temp[i1]!='\0';i1++)
+			{
+				buffer[bufferLength++]=temp[i1];
+			}
+			buffer[bufferLength]='\0';
+			clients[index] = -1;
+
+			write( connectionSocket , buffer , sizeof(buffer) );
+			close(connectionSocket);
+			break;
+		}
+		
+		else
+		{
+			printf("Kindly specify the correct value of requestType\n");
+		}
+
 	}
 }
 
 int main( int argc , char ** argv)
 {
+	for( int i1=0 ; i1< MAX_CLIENTS ; i1++)
+	{
+		clients[i1]=-1;
+	}
 
 	if( argc != 2)
 	{
@@ -35,12 +192,23 @@ int main( int argc , char ** argv)
 	socklen_t clientLength;
 	struct sockaddr_in clientAddress , serverAddress;
 	listenSocket = socket( AF_INET , SOCK_STREAM , 0 );
+	if( listenSocket < 0)
+	{
+		printf("Error in creating listening Socket \n");
+		exit(0);
+	}
+	printf("Listening Socket created successfully\n");
+
 	bzero( &serverAddress , sizeof(serverAddress) );
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_addr.s_addr = htonl( INADDR_ANY );
 	serverAddress.sin_port = htons( (int) atoi( argv[1] ) ) ;
-	bind( listenSocket , (struct sockaddr *) &serverAddress , sizeof(serverAddress) );
-	if(listen( listenSocket , 5 ) < 0  )
+	if(bind( listenSocket , (struct sockaddr *) &serverAddress , sizeof(serverAddress) )!=0)
+	{
+		printf("Error in binding server address to the listening socket\n");
+		exit(0);
+	}
+	if(listen( listenSocket , MAX_CLIENTS ) < 0  )
 	{
 		printf("Error in listening\n");
 		exit(0);

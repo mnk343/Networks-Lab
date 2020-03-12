@@ -9,7 +9,7 @@ void driver(int clientSocket)
     while(1) 
     { 
         bzero(buffer, MAX_LINE); 
-        printf("Enter the request (RequestType UFC Number ): "); 
+        printf("Enter the request (RequestType UPC Number ): \n"); 
         size = 0; 
         while ((buffer[size++] = getchar()) != '\n');
 		write(clientSocket, buffer, sizeof(buffer)); 
@@ -41,6 +41,7 @@ int main( int argc , char ** argv)
 		printf("Error while creating the client socket\n");
 		exit(0);
 	}
+	printf("Socket created successfully\n");
 	bzero (&serverAddress , sizeof(serverAddress) );
 
 	serverAddress.sin_family = AF_INET;
@@ -57,6 +58,7 @@ int main( int argc , char ** argv)
 		exit(0);
 	}
 	
+	printf("TCP Connection established\n\n");
 	driver(clientSocket);	
 	exit(0);
 
