@@ -9,7 +9,7 @@ void driver(int clientSocket)
     while(1) 
     { 
         bzero(buffer, MAX_LINE); 
-        printf("Enter the request : "); 
+        printf("Enter the request (RequestType UFC Number ): "); 
         size = 0; 
         while ((buffer[size++] = getchar()) != '\n');
 		write(clientSocket, buffer, sizeof(buffer)); 

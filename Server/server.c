@@ -23,6 +23,12 @@ void driver( int connectionSocket )
 
 int main( int argc , char ** argv)
 {
+
+	if( argc != 2)
+	{
+		printf("Please enter correct number of arguments!!");
+		exit(0);
+	}
 	int listenSocket , connectionSocket;
 	pid_t childPid;
 
@@ -51,6 +57,11 @@ int main( int argc , char ** argv)
 		}
 
 		childPid = fork() ;
+		if( childPid < 0 )
+		{
+			printf("Error on fork\n");
+			exit(0);
+		}
 		if( childPid  == 0 )
 		{
 			if( close( listenSocket) < 0 )
@@ -69,14 +80,3 @@ int main( int argc , char ** argv)
 
 	}	
 }
-
-
-
-
-
-
-
-
-
-
-
