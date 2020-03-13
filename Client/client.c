@@ -11,14 +11,18 @@ void driver(int clientSocket)
         bzero(buffer, MAX_LINE); 
         printf("Enter the request (RequestType UPC Number ): \n"); 
         size = 0; 
+        int fin=0;
+
         while ((buffer[size++] = getchar()) != '\n');
 		write(clientSocket, buffer, sizeof(buffer)); 
-        
+        if( buffer[0]=='1')
+        	fin=1;
+
         bzero(buffer, MAX_LINE); 
         read(clientSocket, buffer, sizeof(buffer)); 
-        printf("From Server : %s\n", buffer); 
-        if ((strncmp(buffer, "exit", 4)) == 0) { 
-            printf("Client Exit...\n"); 
+        printf("Response From Server : %s\n", buffer); 
+        if ( fin == 1) { 
+            printf("Client Exit\n"); 
             break; 
         } 
     } 

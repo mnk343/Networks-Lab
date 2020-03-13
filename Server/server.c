@@ -7,26 +7,22 @@
 int clients[MAX_CLIENTS];     
 int totalCost[MAX_CLIENTS];
 
-void swap ( char a , char b) 
-{
-	char temp = a;
-	a= b;
-	b=temp;
-}
 void reverse(char str[], int length) 
 { 
     int start = 0; 
     int end = length -1; 
     while (start < end) 
     { 
-        swap(*(str+start), *(str+end)); 
+        char temp  = *(str+start);
+        *(str+start) = *(str+end);
+        *(str+end) = temp;
         start++; 
         end--; 
     } 
 } 
   
 // Implementation of itoa() 
-char* itoa(int num, char* str, int base) 
+void itoa(int num, char* str, int base) 
 { 
     int i = 0; 
     bool isNegative = false; 
@@ -36,7 +32,6 @@ char* itoa(int num, char* str, int base)
     { 
         str[i++] = '0'; 
         str[i] = '\0'; 
-        return str; 
     } 
   
     // In standard itoa(), negative numbers are handled only with  
@@ -64,7 +59,6 @@ char* itoa(int num, char* str, int base)
     // Reverse the string 
     reverse(str, i); 
   
-    return str; 
 } 
 
 
@@ -148,7 +142,7 @@ void driver( int connectionSocket )
 		while(buffer[i]!='\0' && buffer[i]!=' ')
 		{
 			upc[k1++] = buffer[i++];
-			printf("%d %d\n",k1,i );
+			// printf("%d %d\n",k1,i );
 		}
 		upc[k1]='\0';
 		i++;
@@ -163,19 +157,26 @@ void driver( int connectionSocket )
 		bzero(buffer , MAX_LINE);
 		if( requestType == '0' )
 		{
-			printf("Cool\n");
+			bzero(buffer , MAX_LINE);
+
+			// printf("Cool\n");
 			if( upc == NULL || strlen(upc) != 3 )
 			{
-				printf("Incorrect UPC Number\n");
+				int bufferLength=0;
+					char *t = "1 Protocol Error";
+					for(int i1=0;t[i1]!='\0';i1++)
+						buffer[bufferLength++]=t[i1];
+					buffer[ bufferLength ]='\0';
+				write( connectionSocket , buffer , sizeof(buffer) );
+					
 			}
 			else
 			{
 				int cost;
 				char *desc;
-				printf("Cool2\n");
+				// printf("Cool2\n");
 				details(upc , &cost , &desc);
 				    // details("001" , &price , &desc);
-		printf("%s %s %s %d Fuck this shit\n",upc , number , desc, cost);
 
 				if( cost == -1)
 				{
@@ -196,7 +197,7 @@ void driver( int connectionSocket )
 					int bufferLength=2;
 
 					char temp[MAX_LINE];
-					temp = itoa( cost , temp,10 );
+					itoa( cost , temp,10 );
 					int ctr=0;
 					printf("Temp = %s\n" , temp);
 					while( temp!=NULL && temp[ctr]!='\0' )
@@ -210,20 +211,23 @@ void driver( int connectionSocket )
 						buffer [ bufferLength++ ] = desc[ctr++];
 					}
 					buffer[bufferLength]='\0';
+
 				}
-				printf("@@ %s @@\n", buffer);
+				printf("%s %s %s %d %d\n",upc , number , desc, cost, totalCost[index]);
 				write( connectionSocket , buffer , sizeof(buffer) );
 			}
 		}
 
 		else if( requestType == '1' )
 		{
+			bzero(buffer , MAX_LINE);
+
 			buffer[0]='0';
 			buffer[1]=' ' ;
-			char *temp;
+			char temp[MAX_LINE];
 			int bufferLength=2;
 
-			temp = itoa(totalCost[index] , temp, 10 );
+			itoa(totalCost[index] , temp, 10 );
 			for(int i1=0;temp[i1]!='\0';i1++)
 			{
 				buffer[bufferLength++]=temp[i1];
@@ -237,7 +241,14 @@ void driver( int connectionSocket )
 		}
 		
 		else
-		{
+		{	
+			int bufferLength=0;
+				char *t = "1 Protocol Error";
+				for(int i1=0;t[i1]!='\0';i1++)
+					buffer[bufferLength++]=t[i1];
+				buffer[ bufferLength ]='\0';
+			write( connectionSocket , buffer , sizeof(buffer) );
+				
 			printf("Kindly specify the correct value of requestType\n");
 		}
 
