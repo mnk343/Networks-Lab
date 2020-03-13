@@ -15,7 +15,8 @@ void ctrlCHandler( int num )
 	for(int i=MAX_CLIENTS-1;i>=0;i--){
 
 		if(clients[i] != -1){
-			bzero(buffer , MAX_LINE);	// Message is written in buffer to show on client's side.
+			// Message is written in buffer to show on client's side.
+			bzero(buffer , MAX_LINE);	
 			char *t = "2 Server Down";
 			int bufferLength = 0;
 			for(int i = 0; t[i]; i++){
@@ -90,12 +91,16 @@ void itoa(int num, char* str, int base)
   
 } 
 
+// This fuction is used to retrieve details of the item requested by the client.
 void details(char* upc , int *price , char** desc){
     *desc = "Not Found";
     *price = -1;
-    FILE* database;
-
-    database = fopen("data.txt" , "r");
+    // File pointer.
+    FILE* database;	
+	
+    // The file is opened using 'r' read option.
+    database = fopen("data.txt" , "r");	
+    // If the file doesn't exist then show error.	
     if(database == NULL){
         *price = -1;
         *desc = "Error: Cannot access database";
@@ -104,7 +109,9 @@ void details(char* upc , int *price , char** desc){
     char dupc[100];
     char ddesc[100];
     int dd;
+    // Read the file and compare UPC id with each line of file and find the correct entry.
     while(fscanf(database , "%s %d %s\n" , dupc , &dd , ddesc) != EOF){
+	// Compare strings.		
         if(strncmp(dupc , upc , 3) == 0){
             *desc = (char *) malloc(sizeof(ddesc));
             strcpy(*desc , ddesc);
@@ -112,13 +119,17 @@ void details(char* upc , int *price , char** desc){
             break;
         }
     }
+    // Close the file.
     fclose(database);
 }
+
 
 void driver( int connectionSocket )
 {
 	int pos=-1;
 	int flag=0;
+	
+	
 	for(int i1=0;i1<MAX_CLIENTS ; i1++)
 	{
 		if( clients[i1] == -1)
@@ -283,34 +294,50 @@ void driver( int connectionSocket )
 
 int main( int argc , char ** argv)
 {
+	// Set the signal to invoke ctrlCHandler function on pressing Ctrl-C.
 	signal(SIGINT, ctrlCHandler);
+
+	// Initialize the array and set all clients sockets as -1 which means this is not occupied.
 	for( int i1=0 ; i1< MAX_CLIENTS ; i1++)
 	{
 		clients[i1]=-1;
 	}
-
+	
+	// If there are no valid number of arguments then show error.
 	if( argc != 2)
 	{
 		printf("Please enter correct number of arguments!!");
 		exit(0);
 	}
+
+	// Sockets are initialized here.
+	// listenSocket is the socket on which client sends the connection request.
+	// connectionSocket is the socket on which the connection is established and through which
+	// the further tranfer of messages will take place.
 	int listenSocket , connectionSocket;
 	pid_t childPid;
-
+	
 	socklen_t clientLength;
 	struct sockaddr_in clientAddress , serverAddress;
+	// listenSocket initialized. AF_INET is used for Internet.
 	listenSocket = socket( AF_INET , SOCK_STREAM , 0 );
+
+	// If the socket is < 0 then it is considered as error.
 	if( listenSocket < 0)
 	{
 		printf("Error in creating listening Socket \n");
 		exit(0);
 	}
 	printf("Listening Socket created successfully\n");
-
+	
+	// serverAddress is initialized to 0 using bzero.
 	bzero( &serverAddress , sizeof(serverAddress) );
+
+	// Setting of serverAddress.
 	serverAddress.sin_family = AF_INET;
 	serverAddress.sin_addr.s_addr = htonl( INADDR_ANY );
 	serverAddress.sin_port = htons( (int) atoi( argv[1] ) ) ;
+	// bind this listenSocket to the serverAddress.
 	if(bind( listenSocket , (struct sockaddr *) &serverAddress , sizeof(serverAddress) )!=0)
 	{
 		printf("Error in binding server address to the listening socket\n");
