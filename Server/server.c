@@ -2,19 +2,20 @@
  #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define MAX_LINE 1024
-#define MAX_CLIENTS 100
-int clients[MAX_CLIENTS];     
-int totalCost[MAX_CLIENTS];
+#define MAX_LINE 1024         // Maximum size of buffer.   
+#define MAX_CLIENTS 100       // Max number of clients allowed for the server.
+int clients[MAX_CLIENTS];     // Array to save SOCK_NUM for each client.
+int totalCost[MAX_CLIENTS];   // Array to store total cost for each client.
 
+// This function handles the Ctrl-C signal. It will be called when Ctrl-C is pressed on console from server's side.
 void ctrlCHandler( int num )
 {
 	char buffer[MAX_LINE];
-	signal(SIGINT, ctrlCHandler);
-	for(int i=MAX_CLIENTS-1;i>=0;i--){
+	signal(SIGINT, ctrlCHandler);	// This sets the signal to invoke ctrlCHandler function whenever Ctrl-C is pressed.
+	for(int i=MAX_CLIENTS-1;i>=0;i--){	// Loop to iterate over all sockets and close each one of them.
 
 		if(clients[i] != -1){
-			bzero(buffer , MAX_LINE);
+			bzero(buffer , MAX_LINE);	// Message is written in buffer to show on client's side.
 			char *t = "2 Server Down";
 			int bufferLength = 0;
 			for(int i = 0; t[i]; i++){
@@ -33,6 +34,7 @@ void ctrlCHandler( int num )
 	exit(0);
 }
 
+// This function is used to reverse a string.
 void reverse(char str[], int length) 
 { 
     int start = 0; 
@@ -47,7 +49,8 @@ void reverse(char str[], int length)
     } 
 } 
   
-// Implementation of itoa() 
+// This is the implementation of itoa() to convert an interger to a string. 
+// It takes interger, char * and the base to convert integer as input.
 void itoa(int num, char* str, int base) 
 { 
     int i = 0; 
@@ -86,7 +89,6 @@ void itoa(int num, char* str, int base)
     reverse(str, i); 
   
 } 
-
 
 void details(char* upc , int *price , char** desc){
     *desc = "Not Found";
