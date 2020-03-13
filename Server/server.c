@@ -343,28 +343,38 @@ int main( int argc , char ** argv)
 		printf("Error in binding server address to the listening socket\n");
 		exit(0);
 	}
+	// listen to this socket so that the number doesn't exceed MAX_CLIENTS.
 	if(listen( listenSocket , MAX_CLIENTS ) < 0  )
 	{
 		printf("Error in listening\n");
 		exit(0);
 	}
-
+	// loop runs forever.
 	while(1)
 	{
+		// this variable defines the size of the clientAddress. It will be used while allocating socket.
 		clientLength = sizeof(clientAddress);
+
+		// connectionSocket is the socket through which all the transmission of messages take place.
+		// If the connection request from client is accepted then this will be it's socket number.
 		connectionSocket = accept( listenSocket , (struct sockaddr *) &clientAddress , &clientLength );
+		// If connectionSocket < 0 then it is treated as an error.
 		if( connectionSocket < 0) 
 		{
 			printf("Error in creating connection socket\n");
 			exit(0);
 		}
 
+		// fork() return a child process id which is stored as childPid.
 		childPid = fork() ;
+		// If childPid < 0 then this is an error.
 		if( childPid < 0 )
 		{
 			printf("Error on fork\n");
 			exit(0);
 		}
+		// If childPid == 0 then the server must stop recieving any connection requests for this child Process.
+		// Hence the listening Socket must be closed for this child Process.
 		if( childPid  == 0 )
 		{
 			if( close( listenSocket) < 0 )
@@ -372,9 +382,11 @@ int main( int argc , char ** argv)
 					printf("Error in closing listening socket\n");
 					exit(0);
 			}
+			// driver function is called for this client which will do all the functions as per client's requirements.
 			driver(connectionSocket);
 			exit(0);
 		}
+		// This closes the connectionSocket and if it is < 0 then it shows error.
 		if(close( connectionSocket) < 0)
 		{
 			printf("Error in closing connection socket\n");
