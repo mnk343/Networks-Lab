@@ -68,7 +68,7 @@ char* itoa(int num, char* str, int base)
 } 
 
 
-void details(char upc , int *price , char* desc){
+void details(char* upc , int *price , char** desc){
     *desc = "Not Found";
     *price = -1;
     FILE* database;
@@ -82,7 +82,7 @@ void details(char upc , int *price , char* desc){
     char dupc[100];
     char ddesc[100];
     int dd;
-    while(fscanf(database , "%s %d %s" , dupc , &dd , ddesc) != EOF){
+    while(fscanf(database , "%s %d %s\n" , dupc , &dd , ddesc) != EOF){
         if(strncmp(dupc , upc , 3) == 0){
             *desc = (char *) malloc(sizeof(ddesc));
             strcpy(*desc , ddesc);
@@ -153,7 +153,7 @@ void driver( int connectionSocket )
 		upc[k1]='\0';
 		i++;
 
-		while(buffer[i]!='\0' && buffer[i]!=' ')
+		while(buffer[i]!='\0' && buffer[i]!=' ' && buffer[i] != '\n')
 		{
 			number[k2++] = buffer[i++];
 		}
@@ -163,6 +163,7 @@ void driver( int connectionSocket )
 		bzero(buffer , MAX_LINE);
 		if( requestType == '0' )
 		{
+			printf("Cool\n");
 			if( upc == NULL || strlen(upc) != 3 )
 			{
 				printf("Incorrect UPC Number\n");
@@ -171,9 +172,10 @@ void driver( int connectionSocket )
 			{
 				int cost;
 				char *desc;
+				printf("Cool2\n");
 				details(upc , &cost , &desc);
 				    // details("001" , &price , &desc);
-		printf("%s %s %s %d\n",upc , number , desc, cost);
+		printf("%s %s %s %d Fuck this shit\n",upc , number , desc, cost);
 
 				if( cost == -1)
 				{
@@ -193,16 +195,17 @@ void driver( int connectionSocket )
 					buffer[1] = ' ';
 					int bufferLength=2;
 
-					char *temp;
+					char temp[MAX_LINE];
 					temp = itoa( cost , temp,10 );
 					int ctr=0;
+					printf("Temp = %s\n" , temp);
 					while( temp!=NULL && temp[ctr]!='\0' )
 					{
 						buffer [ bufferLength++ ] = temp[ctr++];
 					}
 					buffer[bufferLength++] = ' ';
 					ctr=0;
-					while( details!= NULL && desc[ctr]!='\0' )
+					while( desc != NULL && desc[ctr]!='\0' )
 					{
 						buffer [ bufferLength++ ] = desc[ctr++];
 					}
