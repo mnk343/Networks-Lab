@@ -7,6 +7,34 @@
 int clients[MAX_CLIENTS];     
 int totalCost[MAX_CLIENTS];
 
+void ctrlCHandler( int num )
+{
+	char buffer[MAX_LINE];
+	signal(SIGINT, ctrlCHandler);
+	for(int i=MAX_CLIENTS-1;i>=0;i--){
+
+		if(clients[i] != -1){
+			bzero(buffer , MAX_LINE);
+			char *t = "1 Server Down";
+			int bufferLength = 0;
+			for(int i = 0; t[i]; i++){
+				buffer[ bufferLength++ ] = t[i];
+			}
+			buffer [ bufferLength ] = '\0';
+			write(clients[i] , buffer , sizeof(buffer));
+
+			if(close(clients[i]) < 0){
+				printf("Socket Number %d could not be released\n",clients[i]);
+			}
+			else{
+				printf("Socket Number %d is released\n",clients[i]);
+			}
+			clients[i] = -1;	
+		}
+	}
+	exit(0);
+}
+
 void reverse(char str[], int length) 
 { 
     int start = 0; 
@@ -257,6 +285,7 @@ void driver( int connectionSocket )
 
 int main( int argc , char ** argv)
 {
+	signal(SIGINT, ctrlCHandler);
 	for( int i1=0 ; i1< MAX_CLIENTS ; i1++)
 	{
 		clients[i1]=-1;
