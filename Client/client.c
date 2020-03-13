@@ -20,11 +20,19 @@ void driver(int clientSocket)
 
         bzero(buffer, MAX_LINE); 
         read(clientSocket, buffer, sizeof(buffer)); 
+		if( buffer[0] == '2' )
+			fin = 2;
+
         printf("Response From Server : %s\n", buffer); 
         if ( fin == 1) { 
             printf("Client Exit\n"); 
             break; 
         } 
+		if( fin == 2)
+		{
+			printf("Server Down. Client Exiting\n"); 
+            break;
+		}
     } 
 } 
 

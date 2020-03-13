@@ -15,7 +15,7 @@ void ctrlCHandler( int num )
 
 		if(clients[i] != -1){
 			bzero(buffer , MAX_LINE);
-			char *t = "1 Server Down";
+			char *t = "2 Server Down";
 			int bufferLength = 0;
 			for(int i = 0; t[i]; i++){
 				buffer[ bufferLength++ ] = t[i];
