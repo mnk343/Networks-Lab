@@ -11,8 +11,8 @@ int totalCost[MAX_CLIENTS];   // Array to store total cost for each client.
 void ctrlCHandler( int num )
 {
 	char buffer[MAX_LINE];
-	signal(SIGINT, ctrlCHandler);	// This sets the signal to invoke ctrlCHandler function whenever Ctrl-C is pressed.
-	for(int i=MAX_CLIENTS-1;i>=0;i--){	// Loop to iterate over all sockets and close each one of them.
+	signal(SIGINT, ctrlCHandler);
+	for(int i=MAX_CLIENTS-1;i>=0;i--){
 
 		if(clients[i] != -1){
 			bzero(buffer , MAX_LINE);	// Message is written in buffer to show on client's side.
