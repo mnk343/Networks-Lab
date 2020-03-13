@@ -182,6 +182,8 @@ void driver( int connectionSocket )
 					for(int i1=0;t[i1]!='\0';i1++)
 						buffer[bufferLength++]=t[i1];
 					buffer[ bufferLength ]='\0';
+				write( connectionSocket , buffer , sizeof(buffer) );
+					
 				}
 
 				else
