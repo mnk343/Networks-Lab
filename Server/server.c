@@ -26,12 +26,10 @@ void ctrlCHandler( int num )
 			if(close(clients[i]) < 0){
 				printf("Socket Number %d could not be released\n",clients[i]);
 			}
-			else{
-				printf("Socket Number %d is released\n",clients[i]);
-			}
 			clients[i] = -1;	
 		}
 	}
+	printf("Server Exited Gracefully\n" );
 	exit(0);
 }
 
@@ -213,8 +211,7 @@ void driver( int connectionSocket )
 					for(int i1=0;t[i1]!='\0';i1++)
 						buffer[bufferLength++]=t[i1];
 					buffer[ bufferLength ]='\0';
-				write( connectionSocket , buffer , sizeof(buffer) );
-					
+					write( connectionSocket , buffer , sizeof(buffer) );
 				}
 
 				else
@@ -239,10 +236,9 @@ void driver( int connectionSocket )
 						buffer [ bufferLength++ ] = desc[ctr++];
 					}
 					buffer[bufferLength]='\0';
-
+					printf("%s %s %s %d %d\n",upc , number , desc, cost, totalCost[index]);
+					write( connectionSocket , buffer , sizeof(buffer) );			
 				}
-				printf("%s %s %s %d %d\n",upc , number , desc, cost, totalCost[index]);
-				write( connectionSocket , buffer , sizeof(buffer) );
 			}
 		}
 
