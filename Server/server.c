@@ -7,12 +7,73 @@
 int clients[MAX_CLIENTS];     
 int totalCost[MAX_CLIENTS];
 
+void swap ( char a , char b) 
+{
+	char temp = a;
+	a= b;
+	b=temp;
+}
+void reverse(char str[], int length) 
+{ 
+    int start = 0; 
+    int end = length -1; 
+    while (start < end) 
+    { 
+        swap(*(str+start), *(str+end)); 
+        start++; 
+        end--; 
+    } 
+} 
+  
+// Implementation of itoa() 
+char* itoa(int num, char* str, int base) 
+{ 
+    int i = 0; 
+    bool isNegative = false; 
+  
+    /* Handle 0 explicitely, otherwise empty string is printed for 0 */
+    if (num == 0) 
+    { 
+        str[i++] = '0'; 
+        str[i] = '\0'; 
+        return str; 
+    } 
+  
+    // In standard itoa(), negative numbers are handled only with  
+    // base 10. Otherwise numbers are considered unsigned. 
+    if (num < 0 && base == 10) 
+    { 
+        isNegative = true; 
+        num = -num; 
+    } 
+  
+    // Process individual digits 
+    while (num != 0) 
+    { 
+        int rem = num % base; 
+        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0'; 
+        num = num/base; 
+    } 
+  
+    // If number is negative, append '-' 
+    if (isNegative) 
+        str[i++] = '-'; 
+  
+    str[i] = '\0'; // Append string terminator 
+  
+    // Reverse the string 
+    reverse(str, i); 
+  
+    return str; 
+} 
+
+
 void details(char upc , int *price , char* desc){
     *desc = "Not Found";
     *price = -1;
     FILE* database;
 
-    database = fopen("file.txt" , "r");
+    database = fopen("data.txt" , "r");
     if(database == NULL){
         *price = -1;
         *desc = "Error: Cannot access database";
@@ -80,25 +141,27 @@ void driver( int connectionSocket )
 		printf("Request received at server side: %s\n", buffer);
 		
 		char requestType='9';
-		char *upc=NULL,*number=NULL;
+		char upc[MAX_LINE],number[MAX_LINE];
 		int i=2,k1=0,k2=0;
 
 		requestType = buffer[0];
-
 		while(buffer[i]!='\0' && buffer[i]!=' ')
 		{
 			upc[k1++] = buffer[i++];
+			printf("%d %d\n",k1,i );
 		}
+		upc[k1]='\0';
 		i++;
+
 		while(buffer[i]!='\0' && buffer[i]!=' ')
 		{
 			number[k2++] = buffer[i++];
 		}
+		number[k2]='\0';
 		
 		int num = (int) atoi(number);
 		bzero(buffer , MAX_LINE);
-
-		if( requestType == 0 )
+		if( requestType == '0' )
 		{
 			if( upc == NULL || strlen(upc) != 3 )
 			{
@@ -110,6 +173,7 @@ void driver( int connectionSocket )
 				char *desc;
 				details(upc , &cost , &desc);
 				    // details("001" , &price , &desc);
+		printf("%s %s %s %d\n",upc , number , desc, cost);
 
 				if( cost == -1)
 				{
@@ -142,11 +206,12 @@ void driver( int connectionSocket )
 					}
 					buffer[bufferLength]='\0';
 				}
+				printf("@@ %s @@\n", buffer);
 				write( connectionSocket , buffer , sizeof(buffer) );
 			}
 		}
 
-		else if( requestType == 1 )
+		else if( requestType == '1' )
 		{
 			buffer[0]='0';
 			buffer[1]=' ' ;
