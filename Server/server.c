@@ -126,16 +126,20 @@ void details(char* upc , int *price , char** desc){
 
 void driver( int connectionSocket )
 {
+
+	// pos will be used to check if there is space in the clients array
 	int pos=-1;
 	int flag=0;
 	
-	
 	for(int i1=0;i1<MAX_CLIENTS ; i1++)
 	{
+		// check if there is any free space in the clients array
 		if( clients[i1] == -1)
 		{
 			pos = i1;
 		}
+		// if connectionSocket already exists in the array, this means there already 
+		// exits such an extry
 		if( clients[i1] == connectionSocket  )
 		{
 			flag=1;
@@ -145,19 +149,27 @@ void driver( int connectionSocket )
 
 	if( flag==0)
 	{
+		// if pos is -1 this implies we were not able to find an entry in the clients array
 		if(pos==-1)
 		{
 			printf("Number of clients exceeded\n");
 			return;
 		}
+		// we put the value of connectionSocket in the first free entry
 		clients[pos] = connectionSocket;
 	}
 
 	printf("Child process created succesfully and now waiting for querries from the client\n");
+	
+	// server buffer
 	char buffer[MAX_LINE];
 	int n;
 
+	// index will store the index of the connectionSocket in the clients array
 	int index;
+	
+	// this loop will assign a value to index as connectionSocket exists in the array 
+	// (this has been checked before)
 	for(int i1=0;i1<MAX_CLIENTS;i1++)
 	{
 		if( clients[i1] == connectionSocket )
@@ -167,17 +179,25 @@ void driver( int connectionSocket )
 		}
 	}
 
+	// infinite loop
 	while(1){
 
+		// initialize the buffer with all 0's
 		bzero(buffer , MAX_LINE);
+
+		// read data from the client
 		read ( connectionSocket , buffer , sizeof(buffer) ) ;
 		printf("Request received at server side: %s\n", buffer);
 		
+		// upc and number will contain the upc code and the number respectively
 		char requestType='9';
 		char upc[MAX_LINE],number[MAX_LINE];
 		int i=2,k1=0,k2=0;
 
+		// if the data is considered correct, the first entry is request type 
 		requestType = buffer[0];
+
+		// then after one space, we will get the upc code as demanded by the client
 		while(buffer[i]!='\0' && buffer[i]!=' ')
 		{
 			upc[k1++] = buffer[i++];
@@ -186,21 +206,27 @@ void driver( int connectionSocket )
 		upc[k1]='\0';
 		i++;
 
+		// after the upc code, then comes the number of items requested by the client
 		while(buffer[i]!='\0' && buffer[i]!=' ' && buffer[i] != '\n')
 		{
 			number[k2++] = buffer[i++];
 		}
 		number[k2]='\0';
 		
+		// the number is converted to int using atoi
 		int num = (int) atoi(number);
 		bzero(buffer , MAX_LINE);
+		
+		// if request type is 0 , this means that user is requesting for an item
 		if( requestType == '0' )
 		{
 			bzero(buffer , MAX_LINE);
 
 			// printf("Cool\n");
+			// if upc does not exist if length of upc is not 3, this means this is an error
 			if( upc == NULL || strlen(upc) != 3 )
 			{
+				// we send protocol error to the client
 				int bufferLength=0;
 					char *t = "1 Protocol Error";
 					for(int i1=0;t[i1]!='\0';i1++)
@@ -209,16 +235,21 @@ void driver( int connectionSocket )
 				write( connectionSocket , buffer , sizeof(buffer) );
 					
 			}
+			// if upc code is correct
 			else
 			{
 				int cost;
 				char *desc;
 				// printf("Cool2\n");
+				// this function will assign the desc variable with item 
+				// description and cost variable with the cost of each item
 				details(upc , &cost , &desc);
 				    // details("001" , &price , &desc);
 
+				// if cost of item is -1 this means that item was not found in the database
 				if( cost == -1)
 				{
+					// we send the appropriate messages to the client 
 					int bufferLength=0;
 					char *t = "1 UPC is not found in database";
 					for(int i1=0;t[i1]!='\0';i1++)
@@ -227,58 +258,81 @@ void driver( int connectionSocket )
 					write( connectionSocket , buffer , sizeof(buffer) );
 				}
 
+				// if the item was found in the database
 				else
 				{
+					// value of cost of this particular item is added to the total cost
+					// array which indicates the total cost of this client
 					totalCost[index] += (int)( cost * num );
 					buffer[0] = '0';
 					buffer[1] = ' ';
 					int bufferLength=2;
 
+					// the cost along with the description will be sent to the client
 					char temp[MAX_LINE];
 					itoa( cost , temp,10 );
 					int ctr=0;
-					printf("Temp = %s\n" , temp);
+					
+					// put the data of temp in the buffer
 					while( temp!=NULL && temp[ctr]!='\0' )
 					{
 						buffer [ bufferLength++ ] = temp[ctr++];
 					}
 					buffer[bufferLength++] = ' ';
 					ctr=0;
+					
+					//put the data of the desc variable signifying description in the buffer 
 					while( desc != NULL && desc[ctr]!='\0' )
 					{
 						buffer [ bufferLength++ ] = desc[ctr++];
 					}
 					buffer[bufferLength]='\0';
 					printf("%s %s %s %d %d\n",upc , number , desc, cost, totalCost[index]);
-					write( connectionSocket , buffer , sizeof(buffer) );			
+					// send everything present in the buffer to the client
+					// response is sent to the client
+					write( connectionSocket , buffer , sizeof(buffer) );
 				}
 			}
 		}
 
+		// if request type is 1, it means that client has requested to close the connection
 		else if( requestType == '1' )
 		{
+			// initialize the buffer with all 0's
 			bzero(buffer , MAX_LINE);
 
 			buffer[0]='0';
 			buffer[1]=' ' ;
+
 			char temp[MAX_LINE];
 			int bufferLength=2;
 
+			// convert the totalCost variable to a string 
 			itoa(totalCost[index] , temp, 10 );
+
+			// put the value of total cost in the buffer
 			for(int i1=0;temp[i1]!='\0';i1++)
 			{
 				buffer[bufferLength++]=temp[i1];
 			}
 			buffer[bufferLength]='\0';
+			
+			// free this client by putting the value of clients[index] equal to -1
 			clients[index] = -1;
 
+			// send data to the client from tht buffer
 			write( connectionSocket , buffer , sizeof(buffer) );
+			
+			// successfully close the connection from the client side
 			close(connectionSocket);
 			break;
 		}
 		
+		// if request type is neither 0 nor -1 this means there is an error ie
+		// user has given a wrong value of request type
 		else
 		{	
+			// send appropriate messages to the client
 			int bufferLength=0;
 				char *t = "1 Protocol Error";
 				for(int i1=0;t[i1]!='\0';i1++)
