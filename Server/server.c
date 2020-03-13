@@ -10,7 +10,7 @@ int totalCost[MAX_CLIENTS];
 void ctrlCHandler( int num )
 {
 	char buffer[MAX_LINE];
-	signal(SIGINT, ctrlCHandler);
+	// signal(SIGINT, ctrlCHandler);
 	for(int i=MAX_CLIENTS-1;i>=0;i--){
 
 		if(clients[i] != -1){
