@@ -42,7 +42,7 @@ int main( int argc , char ** argv )
 	NS_LOG_INFO(tcpAgent);
 
   	AsciiTraceHelper asciiTraceHelper;
-	std::string traceFileName = "traceWiredTcp" + tcpAgent + ".txt";
+	std::string traceFileName = "traceTcp" + tcpAgent + ".txt";
 
   	Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream (traceFileName);
     *stream->GetStream () << "Using TCP Agent: Tcp" << tcpAgent << "\n";

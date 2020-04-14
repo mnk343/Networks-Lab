@@ -9,14 +9,17 @@
 #include "ns3/packet-sink.h"
 #include "ns3/flow-monitor-module.h"
 #include "ns3/drop-tail-queue.h"
+#include "ns3/mobility-module.h"
+#include "ns3/yans-wifi-helper.h"
+#include "ns3/ssid.h"
 
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE ("WiredConnection") ;
+NS_LOG_COMPONENT_DEFINE ("WirelessConnection") ;
 
 int main( int argc , char ** argv )
 {
-	LogComponentEnable("WiredConnection" , LOG_INFO);
+	LogComponentEnable("WirelessConnection" , LOG_INFO);
 
 	std::string tcpAgent = "TcpWestwood";
 	std::vector<int> packetSizes = {40, 44, 48, 52, 60, 250, 300, 552, 576, 628, 1420 ,1500};
@@ -42,7 +45,7 @@ int main( int argc , char ** argv )
 	NS_LOG_INFO(tcpAgent);
 
   	AsciiTraceHelper asciiTraceHelper;
-	std::string traceFileName = "traceWiredTcp" + tcpAgent + ".txt";
+	std::string traceFileName = "traceWirelessTcp" + tcpAgent + ".txt";
 
   	Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream (traceFileName);
     *stream->GetStream () << "Using TCP Agent: Tcp" << tcpAgent << "\n";
@@ -58,42 +61,92 @@ int main( int argc , char ** argv )
 		NodeContainer nodes;
 		nodes.Create(4);
 
-		PointToPointHelper hostToRouter;
-		hostToRouter.SetDeviceAttribute("DataRate" , StringValue("100Mbps") );
-		hostToRouter.SetChannelAttribute("Delay" , StringValue("20ms") );
-        hostToRouter.SetQueue("ns3::DropTailQueue<Packet>", "MaxSize", QueueSizeValue (QueueSize("250000B")));  
+		NodeContainer wifiApNode_1 = nodes.Get (1);
+		NodeContainer wifiApNode_2 = nodes.Get (2);
+		NodeContainer wifiStaNodes_1 = nodes.Get(0);
+		NodeContainer wifiStaNodes_2 = nodes.Get(3);
 
-	    PointToPointHelper routerToRouter;
-		routerToRouter.SetDeviceAttribute("DataRate" , StringValue("10Mbps") );
-		routerToRouter.SetChannelAttribute("Delay" , StringValue("50ms") );
-        routerToRouter.SetQueue("ns3::DropTailQueue<Packet>", "MaxSize", QueueSizeValue (QueueSize("62500B")));  
+		YansWifiChannelHelper channel_1 = YansWifiChannelHelper::Default ();
+		YansWifiChannelHelper channel_2 = YansWifiChannelHelper::Default ();
+  		YansWifiPhyHelper phy_1 = YansWifiPhyHelper::Default ();
+  		YansWifiPhyHelper phy_2 = YansWifiPhyHelper::Default ();
+  		phy_1.SetChannel (channel_1.Create ());
+  		phy_2.SetChannel (channel_2.Create ());
 
-	    NetDeviceContainer netDevices_1 , netDevices_2 , netDevices_3;
-	    netDevices_1 = hostToRouter.Install( nodes.Get(0) , nodes.Get(1) );
-	    netDevices_2 = routerToRouter.Install(nodes.Get(1) , nodes.Get(2) );
-	    netDevices_3 = hostToRouter.Install(nodes.Get(2) , nodes.Get(3) );
+		WifiHelper wifi;
+  		wifi.SetRemoteStationManager ("ns3::AarfWifiManager");
+
+  		WifiMacHelper mac;
+  		Ssid ssid = Ssid ("ns-3-ssid");
+
+  		mac.SetType ( "ns3::StaWifiMac" , "Ssid" , SsidValue (ssid), "ActiveProbing" , BooleanValue (false) ) ;
+
+  		NetDeviceContainer staDevices_1;
+  		NetDeviceContainer staDevices_2;
+
+  		staDevices_1 = wifi.Install( phy_1 , mac , wifiStaNodes_1 );
+  		staDevices_2 = wifi.Install( phy_2 , mac , wifiStaNodes_2 );
+
+  		mac.SetType ("ns3::ApWifiMac","Ssid", SsidValue (ssid) );
+
+  		NetDeviceContainer apDevices_1;
+  		NetDeviceContainer apDevices_2;
+
+  		apDevices_1 = wifi.Install( phy_1 , mac , wifiApNode_1);
+  		apDevices_2 = wifi.Install( phy_2 , mac , wifiApNode_2);
+
+  		MobilityHelper mobility;
+
+  		mobility.SetPositionAllocator ( "ns3::GridPositionAllocator",
+                                 	    "MinX", DoubleValue (0.0),
+                                 		"MinY", DoubleValue (0.0),
+                                 		"DeltaX", DoubleValue (5.0),
+                                 		"DeltaY", DoubleValue (10.0),
+                                 		"GridWidth", UintegerValue (3),
+                                 		"LayoutType", StringValue ("RowFirst"));
+
+	  	mobility.SetMobilityModel    (  "ns3::RandomWalk2dMobilityModel",
+	                             		"Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
+	  	mobility.Install (wifiStaNodes_1);
+	  	mobility.Install (wifiStaNodes_2);
+
+
+  		mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  		mobility.Install (wifiApNode_1);
+  		mobility.Install (wifiApNode_2);
+
+	    PointToPointHelper bsaToBsa;
+		bsaToBsa.SetDeviceAttribute("DataRate" , StringValue("10Mbps") );
+		bsaToBsa.SetChannelAttribute("Delay" , StringValue("100ms") );
+        bsaToBsa.SetQueue("ns3::DropTailQueue<Packet>", "MaxSize", QueueSizeValue (QueueSize("125000B")));  
+
+	    NetDeviceContainer baseStations;
+	    baseStations = bsaToBsa.Install(nodes.Get(1) , nodes.Get(2) );
 
 	    InternetStackHelper internet;
-	    internet.Install(nodes);
+	    internet.Install (nodes);
 
 	    NS_LOG_INFO( "Assigning IP Addresses." );
   		Ipv4AddressHelper ipv4;
   		ipv4.SetBase( "10.1.1.0" , "255.255.255.0" );
-	  	Ipv4InterfaceContainer interfaces_1 = ipv4.Assign ( netDevices_1 );
-
+	  	Ipv4InterfaceContainer interfaces_1 = ipv4.Assign ( apDevices_1 );
+	  	Ipv4InterfaceContainer interfaces_3 = ipv4.Assign ( staDevices_1 );
+	  	
   		ipv4.SetBase( "10.1.2.0" , "255.255.255.0" );
-	  	Ipv4InterfaceContainer interfaces_2 = ipv4.Assign ( netDevices_2 );
+	  	Ipv4InterfaceContainer interfaces_2 = ipv4.Assign ( apDevices_2 );
+	  	Ipv4InterfaceContainer interfaces_4 = ipv4.Assign ( staDevices_2 );
 
   		ipv4.SetBase( "10.1.3.0" , "255.255.255.0" );
-	  	Ipv4InterfaceContainer interfaces_3 = ipv4.Assign ( netDevices_3 );
+	  	Ipv4InterfaceContainer interfaces_5 = ipv4.Assign ( baseStations );
 
 	  	ApplicationContainer sourceApps;
 	  	ApplicationContainer sinkApps;
 	    Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+	    NS_LOG_INFO( "Assigned IP Addresses." );
 
 	    uint16_t port = 10000 + index;
 
-      	BulkSendHelper source ("ns3::TcpSocketFactory", InetSocketAddress (interfaces_3.GetAddress (1), port));
+      	BulkSendHelper source ("ns3::TcpSocketFactory", InetSocketAddress (interfaces_4.GetAddress (0), port));
       	source.SetAttribute("SendSize" , UintegerValue(packetSize));
       	source.SetAttribute("MaxBytes" , UintegerValue(0));
       	sourceApps= (source.Install( nodes.Get(0) ) );
