@@ -93,13 +93,6 @@ int main( int argc , char ** argv )
 
 	    uint16_t port = 10000 + index;
 
-		// OnOffHelper source ("ns3::TcpSocketFactory",(InetSocketAddress (interfaces_3.GetAddress (1), port)));
-  //       source.SetAttribute ("PacketSize", UintegerValue (packetSize));
-  //       source.SetAttribute ("DataRate", DataRateValue (DataRate ("100Mbps")));
-  //       source.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]"));
-  //       source.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]"));
-  //       sourceApps = source.Install(nodes.Get(0));
-
       	BulkSendHelper source ("ns3::TcpSocketFactory", InetSocketAddress (interfaces_3.GetAddress (1), port));
       	source.SetAttribute("SendSize" , UintegerValue(packetSize));
       	source.SetAttribute("MaxBytes" , UintegerValue(0));
@@ -122,12 +115,9 @@ int main( int argc , char ** argv )
 		Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
   		FlowMonitor::FlowStatsContainer stats = monitor->GetFlowStats ();
   		std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin();
-      	// Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
-	  	
-	  	// *stream->GetStream () <<  << "\t" << std::endl;
+
 	  	double time = i->second.timeLastRxPacket.GetSeconds() - i->second.timeFirstTxPacket.GetSeconds();
 		double throughput = (((i->second.rxBytes*8)/time)/1000);
-      	// *stream->GetStream () << "Throughput: " << std::to_string(throughput) << " Kbps\n";
       	
       	double sumThrougput = 0 , sumSquareThroughput = 0;
 
@@ -136,21 +126,7 @@ int main( int argc , char ** argv )
       	double fairnessIndex = (sumThrougput * sumThrougput )/ (sumSquareThroughput);
 		*stream->GetStream () <<  std::to_string(packetSize) << "\t\t\t" << std::to_string(throughput) <<"\t\t"<<fairnessIndex << "\n";
       	
-      	// std::cout << "Flow " << i->first  << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
       	std::cout <<  std::to_string(packetSize) << "\t\t\t" << (((i->second.rxBytes*8)/time)/1000)<<"\t\t"<<fairnessIndex << "\n";
-  
-  // 		Simulator::Destroy ();
-  // 		std::map<FlowId, FlowMonitor::FlowStats> i = monitor->GetFlowStats();
-  // 		std::cout<<i.size()<<" \n";
-  //   	Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i[1]);
-  //     	std::cout << "Flow " << i[1]  << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
-		// t = classifier->FindFlow (i[2]);
-  //   	Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i[2]);
-  //     	std::cout << "Flow " << i[2]  << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
-	 //  	double time = i[1].timeLastRxPacket.GetSeconds() - i[1].timeFirstTxPacket.GetSeconds();
-  //     	std::cout << "Throughput: " << (((i[1].rxBytes*8)/time)/1000) << " Kbps\n";
-	 //  	time = i[2].timeLastRxPacket.GetSeconds() - i[2].timeFirstTxPacket.GetSeconds();
-  //     	std::cout << "Throughput: " << (((i[2].rxBytes*8)/time)/1000) << " Kbps\n";
   		Simulator::Destroy ();
 	}
 	return 0;
