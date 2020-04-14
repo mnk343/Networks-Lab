@@ -1,0 +1,4 @@
+Minimum: 1.082
+Maximum: 290.88
+Mean: 19.4110571715
+Median: 13.127

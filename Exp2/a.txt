@@ -1,0 +1,7 @@
+hotstar.com: type A, class IN, addr 13.33.169.8
+    Name: hotstar.com
+    Type: A (Host Address) (1)
+    Class: IN (0x0001)
+    Time to live: 60 (1 minute)
+    Data length: 4
+    Address: 13.33.169.8
