@@ -171,14 +171,14 @@ int main( int argc , char ** argv )
 		sinkApps= (sink.Install(nodes.Get(3)));
 
 		sinkApps.Start(Seconds(0));
-		sinkApps.Stop(Seconds(10));
+		sinkApps.Stop(Seconds(5));
 		sourceApps.Start (Seconds (0));
-	  	sourceApps.Stop (Seconds (10));
+	  	sourceApps.Stop (Seconds (5));
  		
  		FlowMonitorHelper flowmon;
 		Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
 
- 		Simulator::Stop (Seconds (10));
+ 		Simulator::Stop (Seconds (5));
   		Simulator::Run ();
 
 		Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());

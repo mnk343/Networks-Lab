@@ -29,8 +29,8 @@ int main( int argc , char ** argv )
 
 	if( tcpAgent == "Westwood" )
     	Config::SetDefault("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpWestwood::GetTypeId()));
-	else if( tcpAgent == "NewReno")
-		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpNewReno"));
+	else if( tcpAgent == "Veno")
+		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpVeno"));
 	else if( tcpAgent == "Vegas")
 		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpVegas"));
 	else{
@@ -42,7 +42,7 @@ int main( int argc , char ** argv )
 	NS_LOG_INFO(tcpAgent);
 
   	AsciiTraceHelper asciiTraceHelper;
-	std::string traceFileName = "traceTcp" + tcpAgent + ".txt";
+	std::string traceFileName = "traceWiredTcp" + tcpAgent + ".txt";
 
   	Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream (traceFileName);
     *stream->GetStream () << "Using TCP Agent: Tcp" << tcpAgent << "\n";
