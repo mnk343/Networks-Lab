@@ -12,6 +12,7 @@
 #include "ns3/mobility-module.h"
 #include "ns3/yans-wifi-helper.h"
 #include "ns3/ssid.h"
+#include "ns3/wifi-module.h"
 
 using namespace ns3;
 
@@ -50,7 +51,8 @@ int main( int argc , char ** argv )
   	Ptr<OutputStreamWrapper> stream = asciiTraceHelper.CreateFileStream (traceFileName);
     *stream->GetStream () << "Using TCP Agent: Tcp" << tcpAgent << "\n";
     *stream->GetStream () <<"Packet Size \t\tThroughput \t\tFairness Index " << "\n";
-
+	Config::SetDefault ("ns3::WifiMacQueue::DropPolicy", EnumValue(WifiMacQueue::DROP_NEWEST));
+ 
 	for( int index = 0 ; index<packetSizes.size() ; index++)
 	{
 		int packetSize = packetSizes[index];
