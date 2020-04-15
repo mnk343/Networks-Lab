@@ -29,8 +29,8 @@ int main( int argc , char ** argv )
 
 	if( tcpAgent == "Westwood" )
     	Config::SetDefault("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpWestwood::GetTypeId()));
-	else if( tcpAgent == "NewReno")
-		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpNewReno"));
+	else if( tcpAgent == "Veno")
+		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpVeno"));
 	else if( tcpAgent == "Vegas")
 		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpVegas"));
 	else{
@@ -102,14 +102,14 @@ int main( int argc , char ** argv )
 		sinkApps= (sink.Install(nodes.Get(3)));
 
 		sinkApps.Start(Seconds(0));
-		sinkApps.Stop(Seconds(5));
+		sinkApps.Stop(Seconds(20));
 		sourceApps.Start (Seconds (0));
-	  	sourceApps.Stop (Seconds (5));
+	  	sourceApps.Stop (Seconds (20));
  		
  		FlowMonitorHelper flowmon;
 		Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
 
- 		Simulator::Stop (Seconds (5));
+ 		Simulator::Stop (Seconds (20));
   		Simulator::Run ();
 
 		Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());

@@ -33,8 +33,8 @@ int main( int argc , char ** argv )
 
 	if( tcpAgent == "Westwood" )
     	Config::SetDefault("ns3::TcpL4Protocol::SocketType", TypeIdValue (TcpWestwood::GetTypeId()));
-	else if( tcpAgent == "NewReno")
-		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpNewReno"));
+	else if( tcpAgent == "Veno")
+		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpVeno"));
 	else if( tcpAgent == "Vegas")
 		Config::SetDefault ("ns3::TcpL4Protocol::SocketType", StringValue ("ns3::TcpVegas"));
 	else{
@@ -97,25 +97,39 @@ int main( int argc , char ** argv )
   		apDevices_1 = wifi.Install( phy_1 , mac , wifiApNode_1);
   		apDevices_2 = wifi.Install( phy_2 , mac , wifiApNode_2);
 
-  		MobilityHelper mobility;
+  		// MobilityHelper mobility;
 
-  		mobility.SetPositionAllocator ( "ns3::GridPositionAllocator",
-                                 	    "MinX", DoubleValue (0.0),
-                                 		"MinY", DoubleValue (0.0),
-                                 		"DeltaX", DoubleValue (5.0),
-                                 		"DeltaY", DoubleValue (10.0),
-                                 		"GridWidth", UintegerValue (3),
-                                 		"LayoutType", StringValue ("RowFirst"));
+  		// mobility.SetPositionAllocator ( "ns3::GridPositionAllocator",
+    //                              	    "MinX", DoubleValue (0.0),
+    //                              		"MinY", DoubleValue (0.0),
+    //                              		"DeltaX", DoubleValue (5.0),
+    //                              		"DeltaY", DoubleValue (10.0),
+    //                              		"GridWidth", UintegerValue (3),
+    //                              		"LayoutType", StringValue ("RowFirst"));
 
-	  	mobility.SetMobilityModel    (  "ns3::RandomWalk2dMobilityModel",
-	                             		"Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
-	  	mobility.Install (wifiStaNodes_1);
-	  	mobility.Install (wifiStaNodes_2);
+	  	// mobility.SetMobilityModel    (  "ns3::RandomWalk2dMobilityModel",
+	   //                           		"Bounds", RectangleValue (Rectangle (-50, 50, -50, 50)));
+	  	// mobility.Install (wifiStaNodes_1);
+	  	// mobility.Install (wifiStaNodes_2);
 
 
-  		mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-  		mobility.Install (wifiApNode_1);
-  		mobility.Install (wifiApNode_2);
+  		// mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+  		// mobility.Install (wifiApNode_1);
+  		// mobility.Install (wifiApNode_2);
+
+	    MobilityHelper mobility;
+	    Ptr<ListPositionAllocator> locationVector = CreateObject<ListPositionAllocator> ();
+	    locationVector->Add (Vector (000.0, 0.0, 0.0));
+	    locationVector->Add (Vector (050.0, 0.0, 0.0));
+	    locationVector->Add (Vector (100.0, 0.0, 0.0));
+	    locationVector->Add (Vector (150.0, 0.0, 0.0));
+
+	    mobility.SetPositionAllocator (locationVector);
+	    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+	    mobility.Install (nodes.Get(0));
+	    mobility.Install (nodes.Get(1));
+	    mobility.Install (nodes.Get(2));
+	    mobility.Install (nodes.Get(3));
 
 	    PointToPointHelper bsaToBsa;
 		bsaToBsa.SetDeviceAttribute("DataRate" , StringValue("10Mbps") );
@@ -157,14 +171,14 @@ int main( int argc , char ** argv )
 		sinkApps= (sink.Install(nodes.Get(3)));
 
 		sinkApps.Start(Seconds(0));
-		sinkApps.Stop(Seconds(5));
+		sinkApps.Stop(Seconds(10));
 		sourceApps.Start (Seconds (0));
-	  	sourceApps.Stop (Seconds (5));
+	  	sourceApps.Stop (Seconds (10));
  		
  		FlowMonitorHelper flowmon;
 		Ptr<FlowMonitor> monitor = flowmon.InstallAll ();
 
- 		Simulator::Stop (Seconds (5));
+ 		Simulator::Stop (Seconds (10));
   		Simulator::Run ();
 
 		Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
